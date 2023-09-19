@@ -38,7 +38,8 @@ def configure_logging():
         log_dir = BASE_DIR / logging_config.get('log_dir', 'logs')
         log_dir.mkdir(exist_ok=True)
         log_file = (
-                log_dir / f'{(logging_config.get("log_file_name", "parser"))}.log'
+                log_dir / (f'{(logging_config.get("log_file_name", "parser"))}'
+                           f'.log')
         )
         rotating_handler = RotatingFileHandler(
             log_file,
