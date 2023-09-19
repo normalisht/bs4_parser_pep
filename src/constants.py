@@ -16,4 +16,7 @@ EXPECTED_STATUS = {
     '': ('Draft', 'Active'),
 }
 
+# Настройки логирования
 LOGGER_CONFIG_FILE = 'logger.cfg'
+DEFAULT_LOG_FORMAT = '"%(asctime)s - [%(levelname)s] - %(message)s"'
+DEFAULT_DT_FORMAT = '%d.%m.%Y %H:%M:%S'

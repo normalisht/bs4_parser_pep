@@ -5,13 +5,13 @@ import requests_cache
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from configs import configure_argument_parser, get_logger
+from configs import configure_argument_parser, configure_logging
 from constants import BASE_DIR, MAIN_DOC_URL, PEPS_URL, EXPECTED_STATUS
 from exceptions import ParserFindTagException
 from outputs import control_output
 from utils import get_response, find_tag
 
-logger = get_logger()
+logger = configure_logging()
 
 
 def whats_new(session):

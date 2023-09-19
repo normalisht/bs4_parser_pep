@@ -3,7 +3,8 @@ import configparser
 import logging
 from logging.handlers import RotatingFileHandler
 
-from constants import BASE_DIR, LOGGER_CONFIG_FILE
+from constants import (BASE_DIR, LOGGER_CONFIG_FILE, DEFAULT_LOG_FORMAT,
+                       DEFAULT_DT_FORMAT)
 
 
 def configure_argument_parser(available_modes):
@@ -28,34 +29,49 @@ def configure_argument_parser(available_modes):
     return parser
 
 
-def get_logger():
+def configure_logging():
     config = configparser.ConfigParser()
     config.read(LOGGER_CONFIG_FILE)
-    logging_config = config['Logger']
 
-    log_dir = BASE_DIR / logging_config.get('log_dir', 'logs')
+    if config.has_section('Logger'):
+        logging_config = config['Logger']
+        log_dir = BASE_DIR / logging_config.get('log_dir', 'logs')
+        log_dir.mkdir(exist_ok=True)
+        log_file = (
+                log_dir / f'{(logging_config.get("log_file_name", "parser"))}.log'
+        )
+        rotating_handler = RotatingFileHandler(
+            log_file,
+            maxBytes=int(logging_config.get('max_bytes', '1_000_000')),
+            backupCount=int(logging_config.get('backup_count', '5')),
+            encoding=logging_config.get('encoding', 'utf-8')
+        )
+        rotating_handler.setFormatter(
+            logging.Formatter(
+                fmt=logging_config.get('log_format', DEFAULT_LOG_FORMAT),
+                datefmt=logging_config.get('dt_format', DEFAULT_DT_FORMAT)
+            )
+        )
+        logger = logging.getLogger(
+            logging_config.get('logger_name', 'Main logger')
+        )
+        logger.setLevel(logging_config.get('log_level', 'INFO'))
+        logger.addHandler(rotating_handler)
+        logger.addHandler(logging.StreamHandler())
+
+        return logger
+
+    log_dir = BASE_DIR / 'logs'
     log_dir.mkdir(exist_ok=True)
-    log_file = (
-            log_dir / f'{(logging_config.get("log_file_name", "parser"))}.log'
-    )
+    log_file = log_dir / 'parser.log'
     rotating_handler = RotatingFileHandler(
-        log_file,
-        maxBytes=int(logging_config.get('max_bytes', '1_000_000')),
-        backupCount=int(logging_config.get('backup_count', '5')),
-        encoding=logging_config.get('encoding', 'utf-8')
+        log_file, maxBytes=1_000_000, backupCount=5, encoding='utf-8'
     )
     rotating_handler.setFormatter(
-        logging.Formatter(
-            fmt=logging_config.get(
-                'log_format', '"%(asctime)s - [%(levelname)s] - %(message)s"'
-            ),
-            datefmt=logging_config.get('dt_format', '%d.%m.%Y %H:%M:%S')
-        )
+        logging.Formatter(fmt=DEFAULT_LOG_FORMAT, datefmt=DEFAULT_DT_FORMAT)
     )
-    logger = logging.getLogger(
-        logging_config.get('logger_name', 'Main logger')
-    )
-    logger.setLevel(logging_config.get('log_level', 'INFO'))
+    logger = logging.getLogger('Main logger')
+    logger.setLevel(logging.INFO)
     logger.addHandler(rotating_handler)
     logger.addHandler(logging.StreamHandler())
 
