@@ -1,4 +1,3 @@
-import logging
 import re
 from urllib.parse import urljoin
 
@@ -8,10 +7,9 @@ from tqdm import tqdm
 
 from configs import configure_argument_parser, get_logger
 from constants import BASE_DIR, MAIN_DOC_URL, PEPS_URL, EXPECTED_STATUS
+from exceptions import ParserFindTagException
 from outputs import control_output
 from utils import get_response, find_tag
-from exceptions import ParserFindTagException
-
 
 logger = get_logger()
 
