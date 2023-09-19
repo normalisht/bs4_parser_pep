@@ -6,10 +6,14 @@ import requests_cache
 from bs4 import BeautifulSoup
 from tqdm import tqdm
 
-from configs import configure_argument_parser, configure_logging
+from configs import configure_argument_parser, get_logger
 from constants import BASE_DIR, MAIN_DOC_URL, PEPS_URL, EXPECTED_STATUS
 from outputs import control_output
 from utils import get_response, find_tag
+from exceptions import ParserFindTagException
+
+
+logger = get_logger()
 
 
 def whats_new(session):
@@ -53,14 +57,14 @@ def latest_versions(session):
 
     soup = BeautifulSoup(response.text, features='lxml')
     sidebar = find_tag(soup, 'div', attrs={'class': 'sphinxsidebarwrapper'})
-    ul_tags = sidebar.find_all('ul')
 
+    ul_tags = sidebar.find_all('ul')
     for ul in ul_tags:
         if 'All versions' in ul.text:
             a_tags = ul.find_all('a')
             break
     else:
-        raise Exception('Nothing found')
+        raise ParserFindTagException()
 
     results = [('Ссылка на документацию', 'Версия', 'Статус')]
     pattern = r'Python (?P<version>\d\.\d+) \((?P<status>.*)\)'
@@ -98,7 +102,7 @@ def download(session):
     response = session.get(archive_url)
     with open(archive_path, 'wb') as file:
         file.write(response.content)
-    logging.info(f'Архив был загружен и сохранён: {archive_path}')
+    logger.info(f'Архив был загружен и сохранён: {archive_path}')
 
 
 def pep(session):
@@ -140,14 +144,14 @@ def get_expected_status(status):
 
 
 def log_mismatched_statuses(mismatched_statuses):
-    mismatched_message = ['Несовпадающие статусы:\n']
+    mismatched_message = ['Несовпадающие статусы:']
     for status in mismatched_statuses:
         mismatched_message.append(
-            (f'{status[0]}\n'
+            (f'\n{status[0]}\n'
              f'Статус в карточке: {status[1]}\n'
-             f'Ожидаемые статусы: {status[2]}\n')
+             f'Ожидаемые статусы: {status[2]}')
         )
-    logging.info(''.join(mismatched_message))
+    logger.info(''.join(mismatched_message))
 
 
 MODE_TO_FUNCTION = {
@@ -159,12 +163,11 @@ MODE_TO_FUNCTION = {
 
 
 def main():
-    configure_logging()
-    logging.info('Парсер запущен!')
+    logger.info('Парсер запущен!')
 
     arg_parser = configure_argument_parser(MODE_TO_FUNCTION.keys())
     args = arg_parser.parse_args()
-    logging.info(f'Аргументы командной строки: {args}')
+    logger.info(f'Аргументы командной строки: {args}')
 
     session = requests_cache.CachedSession()
     if args.clear_cache:
@@ -175,7 +178,7 @@ def main():
 
     if results is not None:
         control_output(results, args)
-    logging.info('Парсер завершил работу.')
+    logger.info('Парсер завершил работу.')
 
 
 if __name__ == '__main__':
